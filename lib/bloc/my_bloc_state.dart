@@ -18,3 +18,9 @@ class MyBlocLoaded extends MyBlocState {
   const MyBlocLoaded(this.post);
 
 }
+class MyBlocEmpty extends MyBlocState {
+    final List<Post> post;
+
+  MyBlocEmpty(this.post);
+
+}

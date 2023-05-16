@@ -7,15 +7,18 @@ class MyBlocEvent extends Equatable {
   List<Object> get props => [];
 }
 
+class MainEvent extends MyBlocEvent{
+  @override
+  List<Object> get props => [];
+}
+
 class LoadMoreEvent extends MyBlocEvent {
   final FilterModel? filterModel;
 
-  LoadMoreEvent({this.filterModel});
+  const LoadMoreEvent({this.filterModel});
 
   @override
   List<Object> get props => [filterModel!];
 }
 
-class RefreshEvent extends MyBlocEvent {
-  
-}
+class RefreshEvent extends MyBlocEvent {}

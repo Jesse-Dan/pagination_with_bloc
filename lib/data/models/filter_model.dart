@@ -3,9 +3,9 @@
 enum Loader {firstCall,flter,refresh}
 class FilterModel {
    int page;
-    final int? limit;
+     int? limit;
 
-  final Loader loader;
+   Loader loader;
 
   FilterModel({ this.page = 1,  this.limit,  this.loader = Loader.firstCall});
   

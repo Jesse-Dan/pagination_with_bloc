@@ -1,7 +1,8 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pagination_with_bloc/bloc/my_bloc_bloc.dart';
-import 'package:pagination_with_bloc/data/models/filter_model.dart';
 
 class PostsView extends StatefulWidget {
   const PostsView({super.key});
@@ -15,7 +16,7 @@ class _PostsViewState extends State<PostsView> {
   void setupScrollController(context) {
     scrollController.addListener(() {
       if (scrollController.offset >=
-          scrollController.position.maxScrollExtent * 0.9) {
+          scrollController.position.maxScrollExtent) {
         BlocProvider.of<MyBlocBloc>(context).add(LoadMoreEvent());
       }
     });
@@ -24,7 +25,7 @@ class _PostsViewState extends State<PostsView> {
   @override
   void initState() {
     setupScrollController(context);
-    BlocProvider.of<MyBlocBloc>(context).add(const MyBlocEvent());
+    BlocProvider.of<MyBlocBloc>(context).add( MainEvent());
     super.initState();
   }
 
@@ -44,53 +45,31 @@ class _PostsViewState extends State<PostsView> {
           child: _list()),
 
       /// Filter
-      floatingActionButton: Column(
-        children: [
-          FloatingActionButton(onPressed: () {
-            BlocProvider.of<MyBlocBloc>(context).add(RefreshEvent());
-          }),
-          FloatingActionButton(
-            onPressed: () {
-              showDialog(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                        content: Column(
-                          children: [
-                            TextField(
-                              controller: limit,
-                              decoration:
-                                  const InputDecoration(hintText: 'set limit'),
-                            ),
-                            // TextField(
-                            //     controller: page,
-                            //     decoration:
-                            //         const InputDecoration(hintText: 'set Page'))
-                          ],
-                        ),
-                        actions: [
-                           TextButton(
-                              onPressed: () async {
-                                BlocProvider.of<MyBlocBloc>(context)
-                                    .filterModel
-                                    .copyWith(
-                                        limit: int.parse(limit.text),
-                                        loader: Loader.firstCall,
-                                        page: 1);
-                              },
-                              child: const Text('Set data')),
-                        
-                          TextButton(
-                              onPressed: () async {
-                                BlocProvider.of<MyBlocBloc>(context)
-                                    .add(const MyBlocEvent());
-                                Navigator.of(context).pop();
-                              },
-                              child: const Text('Filter'))
-                        ],
-                      ));
-            },
-          ),
-        ],
+      floatingActionButton: FloatingActionButton.extended(
+        icon: const Icon(Icons.filter),
+        label: const Text('Filter'),
+        
+        onPressed: () async {
+          showDialog(
+              context: context,
+              builder: (_) => AlertDialog(
+                    content: TextField(controller: limit),
+                    actions: [
+                      FloatingActionButton.extended(
+                        icon: const Icon(Icons.filter),
+                        label: const Text('Filter'),
+                        onPressed: () async {
+                          BlocProvider.of<MyBlocBloc>(context)
+                            ..list.clear()
+                            ..filterModel.page = 1
+                            ..filterModel.limit = int.parse(limit.text)
+                            ..add( MainEvent());
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  ));
+        },
       ),
     );
   }
@@ -98,12 +77,14 @@ class _PostsViewState extends State<PostsView> {
   Widget _list() {
     return BlocBuilder<MyBlocBloc, MyBlocState>(
       builder: (context, state) {
+        log(state.toString());
         if (state is MyBlocInitial) {
           return const Center(child: Text('Please  wait \n Loading...'));
         } else if (state is MyBlocLoaded) {
           return ListView.builder(
             controller: scrollController,
-            itemCount: state.post.length + 1,
+            itemCount:
+                state.post.length + (!BlocProvider.of<MyBlocBloc>(context).initialLoadComplete3 ? 1 : 0),
             itemBuilder: (context, index) {
               if (index < state.post.length) {
                 return ListTile(
@@ -121,10 +102,30 @@ class _PostsViewState extends State<PostsView> {
               }
             },
           );
-        } else {
-          return const Center(
-            child: Text(''),
+        } else if (state is MyBlocEmpty) {
+          return ListView.builder(
+            controller: scrollController,
+            itemCount:
+                state.post.length + (!BlocProvider.of<MyBlocBloc>(context).initialLoadComplete3 ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index < state.post.length) {
+                return ListTile(
+                  leading: Text(state.post[index].id.toString()),
+                  subtitle: Text(state.post[index].body),
+                  title: Text(state.post[index].title),
+                );
+              } else if (index == state.post.length) {
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: Text('No More data')),
+                );
+              } else {
+                return const SizedBox.shrink();
+              }
+            },
           );
+        } else {
+          return Container();
         }
       },
     );
